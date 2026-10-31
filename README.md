@@ -84,7 +84,7 @@ One important distinction was that a firewall allowance did not mean a service w
 
 I also checked which addresses services were listening on. CUPS was listening locally, so I did not treat it as a printing service that I had demonstrated was accessible from Kali.
 
-![Initial listening sockets before disabling unnecessary services]([YOUR_IMAGE_LINK](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/baseline-listening-sockets.png?raw=true))
+![Baseline listening sockets](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/baseline-listening-sockets.png?raw=true)
 
 *Initial listening sockets before disabling unnecessary services.*
 
