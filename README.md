@@ -59,7 +59,9 @@ or exploiting application vulnerabilities.
 
 ## 1. Establishing the baseline
 
-Before making changes, I checked the operating system, account, hostname, interfaces, SELinux mode, firewall configuration, and listening sockets.
+Before changing anything, I checked how the Rocky server was configured. I wanted a clear starting point so I could compare the results after each change rather than guess what had changed.
+
+I checked the operating system, hostname, current user, network addresses, SELinux mode, firewall settings, and listening ports:
 
 ```bash
 cat /etc/rocky-release
@@ -72,31 +74,49 @@ sudo firewall-cmd --zone=public --list-all
 sudo ss -tulnp
 ```
 
-The baseline showed SELinux enforcing and the `public` firewall zone associated with `ens160`. SSH listened on TCP 22, Avahi had UDP 5353 sockets, and CUPS listened on loopback TCP 631. The firewall service list contained `cockpit`, `dhcpv6-client`, and `ssh`.
+SELinux was enforcing, and the `ens160` interface was assigned to the `public` firewall zone. The firewall allowed the `cockpit`, `dhcpv6-client`, and `ssh` services.
 
-I distinguished firewall allowances from listening applications. An allowance does not prove an application is running, and a listening socket alone does not establish remote reachability. The baseline socket snapshot did not show a TCP 9090 listener despite the Cockpit allowance.
+The listening-port check showed:
+
+- SSH listening on TCP port 22.
+- Avahi using UDP port 5353.
+- CUPS listening on the local loopback address on TCP port 631.
+
+One important distinction was that a firewall allowance did not mean a service was running. For example, Cockpit was allowed through the firewall, but the socket check did not show a listener on TCP port 9090.
+
+I also checked which addresses services were listening on. CUPS was listening locally, so I did not treat it as a printing service that I had demonstrated was accessible from Kali.
+
+> Screenshot placement — Baseline
+> Place the evidence after this section. Show the initial `ss -tulnp` output and the `public` zone configuration. Keep the listening addresses, port numbers, interface, and allowed services visible. Two readable images are better than one crowded image.
 
 ## 2. Reducing unnecessary services
 
-Automatic discovery and printing were not required for the server's intended role. I stopped and disabled the relevant services and activation units:
+The server did not need automatic service discovery or printing for its role in this lab. I disabled Avahi and CUPS to remove functionality I was not using.
+
+I included their socket and path units as well as the main services:
 
 ```bash
 sudo systemctl disable --now avahi-daemon.socket avahi-daemon.service
 sudo systemctl disable --now cups.socket cups.path cups.service
 ```
 
-After reboot, I checked the unit states and listening sockets:
+I then rebooted the server and checked whether the services were still inactive:
 
 ```bash
 systemctl is-active avahi-daemon.service avahi-daemon.socket cups.service cups.socket cups.path
 sudo ss -tulnp
 ```
 
-All five targeted units remained inactive. The Avahi UDP 5353 and CUPS TCP 631 sockets were absent, while SSH remained listening. CUPS had originally been loopback-bound: removing it reduced unnecessary functionality, not a demonstrated remotely exposed printing service.
+All five units remained inactive. The Avahi UDP 5353 and CUPS TCP 631 sockets were no longer present, while SSH remained available.
 
-> Screenshot to add: post-reboot Avahi/CUPS unit states and the corresponding socket check.
+This showed that the change survived a reboot. In the case of CUPS, I had removed an unnecessary local service rather than closed a remotely accessible printing service demonstrated by the lab.
 
-I also removed the unused Cockpit allowance from runtime and permanent firewall configurations:
+> Screenshot placement — Services after reboot
+> Place an image here showing the five inactive unit results and the corresponding socket check. Keep the commands visible so the reader can identify which units were checked. The output should also show that SSH is still listening.
+
+### Removing the unused Cockpit firewall allowance
+
+I also removed the Cockpit allowance from both the running firewall configuration and the saved configuration:
 
 ```bash
 sudo firewall-cmd --zone=public --remove-service=cockpit
@@ -105,42 +125,64 @@ sudo firewall-cmd --zone=public --list-services
 sudo firewall-cmd --permanent --zone=public --list-services
 ```
 
-Both service lists then returned `dhcpv6-client ssh`. This removed a firewall allowance; it did not uninstall Cockpit.
+Both service lists then showed:
+
+```text
+dhcpv6-client ssh
+```
+
+This removed the firewall allowance. It did not uninstall Cockpit or prove anything about its installation state.
+
+> Screenshot placement — Cockpit allowance removed
+> Place a small image here showing the runtime and permanent service-list commands and their results. This can share an image with the previous check if everything remains readable.
 
 ## 3. Testing source-specific HTTP access
 
-Apache served a static page for the access-control experiments. The first HTTP request from Kali failed. Before changing the firewall, I confirmed Apache was listening on port 80 and checked the active zone:
+I used Apache to serve a simple web page so I could test access from Kali.
+
+The first HTTP request from Kali failed. Before changing the firewall, I checked that Apache was listening on port 80 and confirmed which firewall zone was active:
 
 ```bash
 sudo ss -lntp 'sport = :80'
 sudo firewall-cmd --get-active-zones
 ```
 
-I added a runtime HTTP allowance for Kali's address rather than a general HTTP service allowance:
+Rather than allow HTTP generally, I added a rule specifically for Kali’s recorded IP address:
 
 ```bash
 sudo firewall-cmd --zone=public --add-rich-rule='rule family="ipv4" source address="192.168.42.129/32" service name="http" accept'
 ```
 
-Repeating the request from Kali returned `HTTP/1.1 200 OK` and the intended page:
+I then repeated the request from Kali:
 
 ```bash
 curl --noproxy "*" --max-time 5 -i http://192.168.42.128/
 ```
 
-The inspected runtime zone contained the source-specific rule without a general HTTP service or explicit port allowance.
+This time, Apache returned `HTTP/1.1 200 OK` and the expected page.
 
-> Screenshot to add: public-zone runtime configuration containing the Kali-specific HTTP rule, accompanied by the successful Kali request.
+The running firewall configuration showed the rule for Kali’s address, without a general HTTP service allowance or an explicit port allowance.
 
-This demonstrated access from the designated client. An unapproved source was not tested. Final permanent-rule and reload evidence remains incomplete, so I do not claim independently verified persistence for this HTTP allowance. The rule also depends on Kali retaining the specified address.
+> Screenshot placement — HTTP rule and successful request
+> Place two images here: Rocky’s runtime `public` zone configuration showing the source-specific rule, followed by Kali’s successful `curl` request. Include the destination address, `200 OK` response, and returned page content.
 
-## 4. SELinux enforcement and recovery
+This demonstrated that Kali could access the page with the rule in place. I did not test HTTP access from another, unapproved address, so that part of the restriction was not independently verified.
 
-The record contains two separate exercises: an initial loopback test using `selinux-test.html` with an intentional `samba_share_t` label, and a later Kali-to-Rocky test using `selinux-probe.txt` with an intentional `default_t` label. They are not one combined experiment. The remote probe is the main sequence below.
+The recorded evidence also does not fully verify the rule’s saved configuration or its behaviour after a reload. I therefore describe this as a successful runtime test, not a completed persistence test.
 
-### Establish normal access
+The rule used Kali’s IP address, so it would also need reviewing if that address changed.
 
-I created harmless test content, set permissions to `0644`, and applied the policy-defined label:
+## 4. Testing SELinux and restoring access
+
+I wanted to understand how SELinux could affect Apache’s access to a file even when the ordinary file permissions appeared correct.
+
+I carried out two separate exercises. The first used a local request to `selinux-test.html` with an intentionally changed `samba_share_t` label. The main test below used Kali to request `selinux-probe.txt`, which I deliberately changed to `default_t`.
+
+These were separate tests, not different stages of one experiment.
+
+### Checking that the file was accessible
+
+I created a harmless text file, set its permissions to `0644`, and applied the expected SELinux label:
 
 ```bash
 printf '%s\n' 'SELinux controlled access test.' | sudo tee /var/www/html/selinux-probe.txt
@@ -148,17 +190,21 @@ sudo chmod 0644 /var/www/html/selinux-probe.txt
 sudo restorecon -v /var/www/html/selinux-probe.txt
 ```
 
-The probe had type `httpd_sys_content_t`, Apache ran in `httpd_t`, and SELinux was enforcing. Kali retrieved the probe successfully with `200 OK`.
+The file had the `httpd_sys_content_t` type, Apache was running in the `httpd_t` domain, and SELinux was enforcing.
 
-### Introduce and investigate a controlled mismatch
+A request from Kali returned `200 OK` and the test text. This gave me a working baseline before deliberately changing the label.
 
-I changed only the probe's SELinux type:
+### Changing the label and investigating the failure
+
+I changed the test file’s SELinux type:
 
 ```bash
 sudo chcon -t default_t /var/www/html/selinux-probe.txt
 ```
 
-The same HTTP request then returned `403 Forbidden`, while ordinary permissions remained `0644`. I investigated rather than assume the response proved SELinux was responsible:
+The same request from Kali then returned `403 Forbidden`, even though the ordinary file permissions remained `0644`.
+
+I did not treat the HTTP error alone as proof that SELinux caused it. I checked the file label, SELinux mode, and relevant audit records:
 
 ```bash
 getenforce
@@ -166,20 +212,28 @@ ls -lZ /var/www/html/selinux-probe.txt
 sudo ausearch -m AVC -c httpd -ts recent -i
 ```
 
-| Audit field | Recorded result |
+The audit records linked Apache’s denied operation to the exact test file:
+
+| Detail | Recorded result |
 | --- | --- |
-| Process/source domain | `httpd`, `httpd_t` |
-| Target | `/var/www/html/selinux-probe.txt` |
-| Target type | `default_t` |
+| Process | `httpd` |
+| Process security domain | `httpd_t` |
+| Target file | `/var/www/html/selinux-probe.txt` |
+| File type | `default_t` |
 | Denied permission | `getattr` |
-| System call/result | `newfstatat`, `EACCES` |
-| Enforcement | `permissive=0` |
+| System call and result | `newfstatat`, `EACCES` |
+| Enforcement indicator | `permissive=0` |
 
-> Screenshot to add: the matching AVC records, probe label, and enforcing state.
+This connected the failed request to an enforced SELinux denial against the incorrectly labelled file.
 
-These records tied the failure to enforced SELinux metadata-access denials against the exact probe. The recorded permission was `getattr`, not a file-content read. The two audit events were denied operations, not evidence of two separate attacks.
+The recorded denial was for `getattr`, an operation involving file information. I did not describe it as a recorded file-content read denial or count the two audit events as two separate attacks.
 
-### Restore access without weakening SELinux
+> Screenshot placement — SELinux failure and investigation
+> Place Kali’s `403 Forbidden` response here, followed by Rocky’s file permissions, SELinux label, enforcing state, and matching audit records. Keep the filename, `httpd_t`, `default_t`, `getattr`, and `permissive=0` readable. Use separate images if needed.
+
+### Restoring access without disabling SELinux
+
+I restored the file’s expected label and checked the result:
 
 ```bash
 sudo restorecon -v /var/www/html/selinux-probe.txt
@@ -187,17 +241,43 @@ ls -lZ /var/www/html/selinux-probe.txt
 getenforce
 ```
 
-The type returned to `httpd_sys_content_t`. Kali again received `200 OK` and the original text, and final checks confirmed SELinux remained enforcing.
+The file type returned to `httpd_sys_content_t`. Kali could retrieve the original text again with a `200 OK` response, and SELinux remained enforcing.
 
-> Screenshot to add: recovered HTTP response and restored file context with SELinux enforcing.
+The complete sequence was:
 
-The verified sequence was normal access, an audited denial after intentional mislabelling, then recovery through correct labelling. No permissive-mode workaround or custom allow policy was required.
+1. Confirm the file was accessible.
+2. Change its SELinux label.
+3. Observe the failed request.
+4. Find the matching audit evidence.
+5. Restore the correct label.
+6. Confirm access worked again without disabling SELinux.
 
-## 5. Fail2Ban SSH protection
+> Screenshot placement — SELinux recovery
+> Place an image of the restored label and enforcing state here, followed by Kali’s successful request to the same file. Keep the filename consistent across the failure and recovery evidence.
 
-The SSH baseline showed port 22, password and public-key authentication enabled, keyboard-interactive authentication disabled, `PermitRootLogin` reported as `without-password`, and `MaxAuthTries` set to six per connection. Root password login was prohibited, but all root SSH access was not disabled. The per-connection limit was separate from Fail2Ban's source-based ban mechanism.
+## 5. Testing Fail2Ban SSH protection
 
-Fail2Ban was installed with firewalld integration and systemd journal support. The lab configuration was:
+For this part of the lab, I wanted to follow the whole sequence: a failed login being recorded, Fail2Ban detecting repeated failures, a firewall restriction being applied, and normal access returning after the ban expired.
+
+### Checking the SSH settings
+
+The recorded SSH settings showed:
+
+- SSH using port 22.
+- Password and public-key authentication enabled.
+- Keyboard-interactive authentication disabled.
+- `PermitRootLogin` reported as `without-password`.
+- `MaxAuthTries` set to six attempts per connection.
+
+The root-login setting prohibited root password login. It did not disable every form of root SSH access.
+
+I also kept the SSH attempt limit separate from Fail2Ban’s settings. The former applied per connection; the Fail2Ban test tracked failures from a source address.
+
+### Configuring the SSH jail
+
+I installed Fail2Ban with support for the systemd journal and firewalld.
+
+The following configuration summarises the recorded setup. It is reconstructed from the lab record rather than copied from a current configuration export:
 
 ```ini
 [sshd]
@@ -212,11 +292,22 @@ bantime = 5m
 ignoreip = 127.0.0.1/8 ::1
 ```
 
-This block is reconstructed from the recorded setup, not a current-state export. Runtime queries confirmed `maxretry = 5`, `findtime = 600`, and `bantime = 300`.
+The settings told Fail2Ban to apply a temporary SSH restriction after five matching failures within ten minutes, with a configured ban time of five minutes.
 
-### Detect one controlled failure
+Runtime checks confirmed:
 
-After checking the server's host-key fingerprint and starting counters, I generated a deliberately incorrect password attempt from Kali with one password prompt:
+```text
+maxretry = 5
+findtime = 600
+bantime = 300
+```
+
+> Screenshot placement — Fail2Ban settings
+> Place an image here showing the runtime query commands and their returned values. If you also include the configuration file, label it separately so the reader can distinguish saved settings from runtime checks.
+
+### Checking detection with one failed login
+
+After checking the server’s host-key fingerprint and Fail2Ban’s starting counters, I made one deliberately incorrect password attempt from Kali:
 
 ```bash
 ssh -o HostKeyAlgorithms=ssh-ed25519 \
@@ -226,76 +317,108 @@ ssh -o HostKeyAlgorithms=ssh-ed25519 \
     -o ConnectTimeout=5 roc@192.168.42.128
 ```
 
-I inspected the server-side evidence:
+I then checked the SSH journal and Fail2Ban status on Rocky:
 
 ```bash
 sudo journalctl -u sshd --since "5 minutes ago" --no-pager
 sudo fail2ban-client status sshd
 ```
 
-The journal recorded a failed password for `roc` from `192.168.42.129`. Fail2Ban reported one detected failure and no active ban. A separate pre-authentication timeout was not treated as another confirmed password failure.
+The SSH journal recorded a failed password for `roc` from Kali’s address, `192.168.42.129`. Fail2Ban showed one detected failure and no active ban.
 
-> Screenshot to add: matching SSH journal event and Fail2Ban's single-failure status.
+A separate connection timeout occurred before authentication. I did not count that as another confirmed failed-password attempt.
 
-### Verify enforcement
+> Screenshot placement — One failure detected
+> Place the matching SSH journal entry and Fail2Ban status here. Show the username, source address, one detected failure, and no active ban. Avoid including any password entry.
 
-After further bounded manual failures, Fail2Ban listed Kali as banned. The firewall contained:
+### Checking that the ban was enforced
+
+I made further manual failed-login attempts until Fail2Ban listed Kali’s address as banned.
+
+The firewall then contained this SSH rejection rule:
 
 ```text
 rule family="ipv4" source address="192.168.42.129" port port="22" protocol="tcp" reject type="icmp-port-unreachable"
 ```
 
-A fresh Kali SSH connection returned:
+A fresh SSH connection from Kali returned:
 
 ```text
 ssh: connect to host 192.168.42.128 port 22: Connection refused
 ```
 
-> Screenshot to add: active ban, corresponding firewall rule, and Kali's refused connection.
+I checked these results together rather than rely on the connection error alone:
 
-The banned-IP entry, matching firewall rule, and fresh connection result together demonstrated enforcement. The restriction targeted SSH from Kali, not every service. The separate HTTP allowance remained configured; HTTP availability during the ban was not tested.
+- Fail2Ban listed Kali as banned.
+- The firewall contained a matching rule for Kali’s address and SSH port.
+- A new SSH connection from Kali was refused.
 
-The cumulative `Total failed` value was six. That does not change the configured threshold of five or establish the exact sequence of threshold crossing.
+> Screenshot placement — Ban and enforcement
+> Place the active Fail2Ban status, matching firewall rule, and fresh Kali connection attempt here. Use two or three images rather than shrinking the terminal text.
 
-### Verify automatic expiry and recovery
+The restriction targeted SSH from Kali, not all traffic from that machine. The separate HTTP allowance remained configured, but I did not test HTTP access while the SSH ban was active.
 
-After automatic expiry, the jail showed no active bans, the SSH rejection rule was absent, and the unrelated HTTP allowance remained. A legitimate SSH login succeeded, with no manual unban reported.
+The cumulative `Total failed` counter showed six. That did not change the configured threshold of five, and the available evidence did not establish the exact order in which every failure was counted.
 
-> Screenshot to add: post-expiry jail/firewall checks and the successful legitimate SSH login.
+### Checking automatic expiry and recovery
 
-The configured ban duration was 300 seconds. Exact elapsed duration was not measured using timestamped Ban and Unban records.
+After the ban expired, I checked Fail2Ban and the firewall again.
+
+There were no active bans, and the SSH rejection rule was no longer present. The unrelated HTTP allowance remained configured.
+
+I then completed a legitimate SSH login from Kali. The recorded recovery did not involve a manual unban.
+
+> Screenshot placement — Ban expiry and restored access
+> Place the post-expiry Fail2Ban status and firewall check here, followed by the successful SSH login. Show enough of the new session to establish that the login succeeded, without exposing unrelated account information.
+
+This demonstrated automatic removal of the restriction and successful recovery.
+
+The configured ban time was 300 seconds. I did not measure the exact elapsed time using timestamped Ban and Unban records, so I do not claim an independently measured five-minute duration.
 
 ## Results
 
-| Area | Demonstrated result |
+| Area | What I verified |
 | --- | --- |
-| Service reduction | Targeted Avahi/CUPS units and sockets remained inactive after reboot |
-| Firewall | Cockpit allowance removed; Kali-specific runtime HTTP access demonstrated |
-| SELinux | Enforced denial correlated with audit evidence; correct labelling restored access |
-| Fail2Ban | Detection, SSH restriction, connection rejection, automatic removal, and recovery observed |
+| Unnecessary services | Avahi and CUPS units remained inactive after reboot, and their recorded sockets were absent. |
+| Firewall cleanup | The Cockpit allowance was removed from both runtime and permanent service lists. |
+| HTTP access | Kali could retrieve the Apache page with a source-specific runtime rule in place. |
+| SELinux | An incorrect file label caused an audited denial; restoring the expected label restored access while SELinux stayed enforcing. |
+| Fail2Ban detection | A controlled failed SSH login appeared in the journal and Fail2Ban’s counters. |
+| Fail2Ban enforcement | Kali’s address was banned, a matching SSH firewall rule appeared, and a fresh connection was refused. |
+| Fail2Ban recovery | The restriction expired automatically, its firewall rule disappeared, and a legitimate SSH login succeeded. |
 
 ## Limitations and follow-up
 
-- This was a controlled lab, not a comprehensive security audit or production-hardening certification.
-- Permanent HTTP-rule and reload evidence remains incomplete; an unapproved HTTP source was not tested.
-- Exact Fail2Ban ban duration and a complete reboot-and-retest of its enforcement were not measured.
-- The recorded Apache ServerName warning has no completed correction documented.
-- Later Suricata preparation left Rocky reporting a NAT address in the working record. The final live topology must be checked rather than assumed to match the earlier host-only tests.
-- Suricata was installed during later preparation, but live monitoring was not verified and is outside this project's completed scope. Its final service and boot-enablement state need a separate closeout check.
-- IPv6 policy coverage, distributed authentication attacks, and web-application vulnerabilities were not comprehensively assessed.
+This was a learning lab, not a full security audit or proof that the server was ready for production.
 
-## Lessons learned
+The following checks remain incomplete or outside the project’s scope:
 
-- Inventory services, activation units, sockets, and bindings before deciding what to remove.
-- Separate runtime behaviour from persistence claims.
-- Correlate an HTTP failure with the exact process, file, and audit event.
-- Correct the misconfiguration rather than disabling the security control.
-- Treat detection, enforcement, and recovery as separate validation steps.
-- Preserve console administration during deliberate connection restrictions.
-- Make conclusions no broader than the evidence supports.
+- HTTP restrictions: I did not test an unapproved source or fully verify the HTTP rule after saving and reloading the firewall.
+- Fail2Ban timing and persistence: I did not measure the exact ban duration or complete a reboot-and-retest of enforcement.
+- Apache configuration: The working record contains a `ServerName` warning, but no completed correction is documented.
+- Final network state: Later Suricata preparation left Rocky reporting a NAT address. The earlier host-only test addresses should not be assumed to describe the current setup.
+- Suricata closeout: Installation was recorded, but live monitoring was not verified. Its final running and boot-enablement states need checking separately.
+- Wider security coverage: I did not comprehensively assess IPv6 rules, authentication attempts spread across multiple source addresses, or web-application vulnerabilities.
 
-## Evidence and publication status
+These limits separate what I completed from what still needs testing.
 
-This narrative was assembled from the lab's working notes, captured terminal outputs, and screenshots. The screenshot insertion notes are editorial placeholders, not missing-image links. Selected, privacy-reviewed images will be embedded in this README before public publication.
+## What I learned
 
-The commands document this lab's procedures; they are not an automated installer and should not be applied blindly to another system.
+The most useful part of this lab was learning to check the outcome of a change rather than assume the command had achieved everything I intended.
+
+- Start with a baseline. Checking services, ports, addresses, and firewall settings first made the later results easier to interpret.
+- Check both configuration and behaviour. A firewall rule, running service, or ban entry was only part of the evidence.
+- Separate working now from surviving a restart. A successful runtime test did not automatically demonstrate persistence.
+- Investigate the cause of a failure. The SELinux exercise required matching the HTTP error to the file label and audit record.
+- Fix the underlying problem. Restoring the file label recovered access without disabling SELinux.
+- Test detection, enforcement, and recovery separately. Each Fail2Ban stage answered a different question.
+- Keep another way to administer the server. VMware console access remained available during deliberate SSH restrictions.
+- Keep conclusions within the evidence. Where a check was incomplete, I recorded the limitation rather than describe it as verified.
+
+## Evidence and publication notes
+
+This write-up brings together the lab’s working notes, recorded terminal output, and selected screenshots.
+
+Screenshots will be checked for sensitive information before publication. They will be placed beside the test they support so the commands, results, and explanation can be read together.
+
+The commands document what I did in this environment. They are not an automated setup script or a set of instructions to apply unchanged to another server.
