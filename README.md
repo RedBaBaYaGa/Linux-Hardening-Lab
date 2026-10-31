@@ -21,24 +21,44 @@ The work covered disabling unnecessary services, allowing HTTP access from the K
 
 ## Lab environment and scope
 
-All testing was limited to owned virtual machines.
+I used two virtual machines in VMware: a Rocky Linux server to configure and protect, and a Kali Linux machine to run the tests against it. All testing stayed within my own lab.
 
-| Component | Role or recorded configuration |
+### Virtual machines
+
+| Machine | Purpose | Interface | IP address during testing |
+| --- | --- | --- | --- |
+| Rocky Linux 9.8 (Blue Onyx) | Server running the services and security controls | `ens160` | `192.168.42.128/24` |
+| Kali Linux | Test machine used to send HTTP requests and make SSH login attempts | `eth0` | `192.168.42.129/24` |
+
+The Rocky server's hostname was `linux-hardening-01`.
+
+### Services and security controls
+
+| Component | What I used it for |
 | --- | --- |
-| Rocky Linux | 9.8 (Blue Onyx), target server |
-| Kali Linux | Authorised test client |
-| VMware | Virtualisation and host-only test network |
-| Rocky hostname | `linux-hardening-01` |
-| Rocky interface/address | `ens160`, `192.168.42.128/24` during controlled tests |
-| Kali interface/address | `eth0`, `192.168.42.129/24` during controlled tests |
-| Apache | Static HTTP test service |
-| firewalld | Network-access restrictions |
-| SELinux | Process and file-type enforcement |
-| Fail2Ban | Authentication-failure detection and temporary SSH restrictions |
+| Apache | Serve a simple web page and test files |
+| firewalld | Control network access to the server |
+| SELinux | Control Apache's access to files based on their security labels |
+| Fail2Ban | Monitor failed SSH logins and temporarily restrict access from the source IP |
 
-The addresses were observed values, not a documented static-address plan. Temporary NAT connectivity was used for package downloads. Host-only networking included the host; it was not isolation from the host itself. VMware console access remained available for administration during connection-restriction tests.
+### Network setup
 
-Suricata preparation was later separated into another project. No IDS detection, SQL injection, XSS protection, or successful exploitation is claimed here.
+During the tests, both machines used the same VMware host-only network. This let Kali communicate with Rocky without placing the lab directly on the physical network. The host computer could also access this network, so it was not isolated from the host itself.
+
+I temporarily switched Rocky to NAT when it needed internet access for package downloads, then returned it to host-only networking for testing.
+
+The IP addresses above are the addresses recorded during the tests. I did not configure or document them as static addresses.
+
+I kept Rocky's VMware console available throughout the tests. This gave me a way to manage the server even when Kali's SSH access was blocked.
+
+### Project boundaries
+
+This project focuses on service reduction, firewall rules, SELinux,
+and Fail2Ban. It does not cover SQL injection, cross-site scripting (XSS),
+or exploiting application vulnerabilities.
+
+I also began preparing Suricata, but moved that work into a separate
+project. No Suricata monitoring or alerting results are included here.
 
 ## 1. Establishing the baseline
 
