@@ -110,7 +110,7 @@ All five units remained inactive. The Avahi UDP 5353 and CUPS TCP 631 sockets we
 
 This showed that the change survived a reboot. In the case of CUPS, I had removed an unnecessary local service rather than closed a remotely accessible printing service demonstrated by the lab.
 
-> Screenshot placement — Services after reboot
+![Post-reboot socket check showing SSH still listening, with Avahi and CUPS sockets absent](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets.png?raw=true)
 > Place an image here showing the five inactive unit results and the corresponding socket check. Keep the commands visible so the reader can identify which units were checked. The output should also show that SSH is still listening.
 
 ### Removing the unused Cockpit firewall allowance
