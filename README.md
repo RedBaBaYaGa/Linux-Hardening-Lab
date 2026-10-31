@@ -7,8 +7,6 @@ I set up a Rocky Linux server and used Kali Linux as the test machine. I started
 For each test, I checked the results in the terminal and relevant logs, then verified that normal access could be restored. This write-up explains
 the changes I made, what happened during testing, and the limits of what I demonstrated.
 
-> Status: core experiments completed; author proofreading, screenshot integration, and final-state checks remain in progress. This README describes recorded test results, not a verified snapshot of the machine's current configuration.
-
 ## Overview
 
 I built this lab to practise configuring Linux security controls and testing whether they behaved as intended. Rather than treating an installed package or an active service as proof of protection, I followed a repeatable process:
