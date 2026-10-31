@@ -2,22 +2,22 @@
 
 I built this lab to get hands-on experience with Linux security and understand how different controls work in practice. I wanted to go beyond installing tools and following commands by testing what they actually allow or block, investigating the logs, and learning how to fix problems without disabling the protection.
 
-I set up a Rocky Linux server and used Kali Linux as the test machine. I started by checking which services were running and disabling the ones the server did not need. I then tested firewall rules, investigated an SELinux access denial, and configured Fail2Ban to temporarily block repeated failed SSH login attempts.
+I set up a Rocky Linux server and used Kali Linux as the test machine. I started by checking which services were running and disabling the ones the server did not need. I then tested firewall rules, investigated a SELinux access denial, and configured Fail2Ban to temporarily block repeated failed SSH login attempts.
 
 For each test, I checked the results in the terminal and relevant logs, then verified that normal access could be restored. This write-up explains
 the changes I made, what happened during testing, and the limits of what I demonstrated.
 
 ## Overview
 
-I built this lab to practise configuring Linux security controls and testing whether they behaved as intended. Rather than treating an installed package or an active service as proof of protection, I followed a repeatable process:
+I worked through the lab one change at a time so I could understand what each change affected. Installing a tool or seeing a service marked as running was only the starting point. I also needed to check what happened when I tested it. For each part of the lab, I followed the same approach:
 
-1. Establish a working baseline.
-2. Make a limited configuration change.
-3. Test the resulting behaviour.
-4. Investigate the relevant configuration and logs.
-5. Verify recovery.
+1. Check the current settings and confirm what was working.
+2. Make a specific change.
+3. Test it and record the result.
+4. Check the relevant settings and logs to understand what happened.
+5. Where the test deliberately blocked access, check that access could be restored.
 
-The project covers unnecessary-service reduction, source-specific HTTP access, SELinux file-label enforcement, and Fail2Ban's detection, enforcement, and recovery sequence.
+The work covered disabling unnecessary services, allowing HTTP access from the Kali machine through a specific firewall rule, testing how SELinux file labels affect Apache's access to web content, and using Fail2Ban to temporarily restrict SSH access after repeated failed logins.
 
 ## Lab environment and scope
 
