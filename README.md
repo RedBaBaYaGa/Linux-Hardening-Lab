@@ -134,8 +134,8 @@ dhcpv6-client ssh
 
 This removed the firewall allowance. It did not uninstall Cockpit or prove anything about its installation state.
 
-> Screenshot placement — Cockpit allowance removed
-> Place a small image here showing the runtime and permanent service-list commands and their results. This can share an image with the previous check if everything remains readable.
+![Cockpit allowance absent from both runtime and permanent firewall service lists, with SSH retained](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/cockpit-allowance-removed.png?raw=true)
+*Cockpit allowance absent from both runtime and permanent firewall service lists, with SSH retained.*
 
 ## 3. Testing source-specific HTTP access
 
