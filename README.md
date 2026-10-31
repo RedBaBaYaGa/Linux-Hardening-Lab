@@ -57,9 +57,6 @@ This project focuses on service reduction, firewall rules, SELinux,
 and Fail2Ban. It does not cover SQL injection, cross-site scripting (XSS),
 or exploiting application vulnerabilities.
 
-I also began preparing Suricata, but moved that work into a separate
-project. No Suricata monitoring or alerting results are included here.
-
 ## 1. Establishing the baseline
 
 Before making changes, I checked the operating system, account, hostname, interfaces, SELinux mode, firewall configuration, and listening sockets.
