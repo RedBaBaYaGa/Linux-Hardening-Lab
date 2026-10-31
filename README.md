@@ -164,8 +164,11 @@ This time, Apache returned `HTTP/1.1 200 OK` and the expected page.
 
 The running firewall configuration showed the rule for Kali’s address, without a general HTTP service allowance or an explicit port allowance.
 
-> Screenshot placement — HTTP rule and successful request
-> Place two images here: Rocky’s runtime `public` zone configuration showing the source-specific rule, followed by Kali’s successful `curl` request. Include the destination address, `200 OK` response, and returned page content.
+![Runtime public-zone configuration allowing HTTP from Kali’s address](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/http-source-specific.png?raw=true)
+*Runtime public-zone configuration allowing HTTP from Kali’s address.*
+
+![Successful HTTP request from Kali, returning 200 OK and the expected lab page](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/http-success-from-kali.png?raw=true)
+*Successful HTTP request from Kali, returning 200 OK and the expected lab page.*
 
 This demonstrated that Kali could access the page with the rule in place. I did not test HTTP access from another, unapproved address, so that part of the restriction was not independently verified.
 
