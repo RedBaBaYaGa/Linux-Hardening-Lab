@@ -1,6 +1,11 @@
 # Linux Hardening Lab
 
-Validating service reduction, firewall configuration, SELinux enforcement, and Fail2Ban SSH protection in a controlled Rocky Linux and Kali lab.
+I built this lab to get hands-on experience with Linux security and understand how different controls work in practice. I wanted to go beyond installing tools and following commands by testing what they actually allow or block, investigating the logs, and learning how to fix problems without disabling the protection.
+
+I set up a Rocky Linux server and used Kali Linux as the test machine. I started by checking which services were running and disabling the ones the server did not need. I then tested firewall rules, investigated an SELinux access denial, and configured Fail2Ban to temporarily block repeated failed SSH login attempts.
+
+For each test, I checked the results in the terminal and relevant logs, then verified that normal access could be restored. This write-up explains
+the changes I made, what happened during testing, and the limits of what I demonstrated.
 
 > Status: core experiments completed; author proofreading, screenshot integration, and final-state checks remain in progress. This README describes recorded test results, not a verified snapshot of the machine's current configuration.
 
