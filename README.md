@@ -53,9 +53,7 @@ I kept Rocky's VMware console available throughout the tests. This gave me a way
 
 ### Project boundaries
 
-This project focuses on service reduction, firewall rules, SELinux,
-and Fail2Ban. It does not cover SQL injection, cross-site scripting (XSS),
-or exploiting application vulnerabilities.
+This project focuses on service reduction, firewall rules, SELinux, and Fail2Ban. It does not cover SQL injection, cross-site scripting (XSS), or exploiting application vulnerabilities.
 
 ## 1. Establishing the baseline
 
@@ -86,8 +84,9 @@ One important distinction was that a firewall allowance did not mean a service w
 
 I also checked which addresses services were listening on. CUPS was listening locally, so I did not treat it as a printing service that I had demonstrated was accessible from Kali.
 
-> Screenshot placement — Baseline
-> Place the evidence after this section. Show the initial `ss -tulnp` output and the `public` zone configuration. Keep the listening addresses, port numbers, interface, and allowed services visible. Two readable images are better than one crowded image.
+https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/baseline-listening-sockets.png?raw=true
+
+*Initial listening sockets before disabling unnecessary services.*
 
 ## 2. Reducing unnecessary services
 
