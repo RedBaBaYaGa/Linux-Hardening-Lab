@@ -85,7 +85,6 @@ One important distinction was that a firewall allowance did not mean a service w
 I also checked which addresses services were listening on. CUPS was listening locally, so I did not treat it as a printing service that I had demonstrated was accessible from Kali.
 
 ![Baseline listening sockets](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/baseline-listening-sockets.png?raw=true)
-
 *Initial listening sockets before disabling unnecessary services.*
 
 ## 2. Reducing unnecessary services
@@ -111,7 +110,10 @@ All five units remained inactive. The Avahi UDP 5353 and CUPS TCP 631 sockets we
 This showed that the change survived a reboot. In the case of CUPS, I had removed an unnecessary local service rather than closed a remotely accessible printing service demonstrated by the lab.
 
 ![Post-reboot socket check showing SSH still listening, with Avahi and CUPS sockets absent](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets.png?raw=true)
-> Place an image here showing the five inactive unit results and the corresponding socket check. Keep the commands visible so the reader can identify which units were checked. The output should also show that SSH is still listening.
+*All five targeted Avahi and CUPS units remained inactive after reboot* 
+
+![Services after reboot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets2.png?raw=true)
+*Post-reboot socket check showing SSH still listening, with the Avahi and CUPS sockets absent.*
 
 ### Removing the unused Cockpit firewall allowance
 
