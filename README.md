@@ -366,8 +366,11 @@ I checked these results together rather than rely on the connection error alone:
 - The firewall contained a matching rule for Kali’s address and SSH port.
 - A new SSH connection from Kali was refused.
 
-> Screenshot placement — Ban and enforcement
-> Place the active Fail2Ban status, matching firewall rule, and fresh Kali connection attempt here. Use two or three images rather than shrinking the terminal text.
+![Fail2Ban enforcement evidence — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-c.png?raw=true)
+*First screenshot selected for the Fail2Ban enforcement section.*
+
+![Fail2Ban enforcement evidence — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-d.png?raw=true)
+*Second screenshot selected for the Fail2Ban enforcement section.*
 
 The restriction targeted SSH from Kali, not all traffic from that machine. The separate HTTP allowance remained configured, but I did not test HTTP access while the SSH ban was active.
 
@@ -381,8 +384,11 @@ There were no active bans, and the SSH rejection rule was no longer present. The
 
 I then completed a legitimate SSH login from Kali. The recorded recovery did not involve a manual unban.
 
-> Screenshot placement — Ban expiry and restored access
-> Place the post-expiry Fail2Ban status and firewall check here, followed by the successful SSH login. Show enough of the new session to establish that the login succeeded, without exposing unrelated account information.
+![Fail2Ban expiry and recovery evidence — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-a.png?raw=true)
+*First screenshot selected for the Fail2Ban expiry and recovery section.*
+
+![Fail2Ban expiry and recovery evidence — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-b.png?raw=true)
+*Second screenshot selected for the Fail2Ban expiry and recovery section.*
 
 This demonstrated automatic removal of the restriction and successful recovery.
 
