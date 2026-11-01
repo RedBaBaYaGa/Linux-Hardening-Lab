@@ -235,12 +235,6 @@ The recorded denial was for `getattr`, an operation involving file information. 
 ![Kali’s request to the deliberately mislabelled probe returned 403 Forbidden](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-probe-forbidden.png?raw=true)
 *Kali’s request to the deliberately mislabelled probe returned 403 Forbidden.*
 
-![Correct file label restored, with SELinux remaining enforcing](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-restored-context.png?raw=true)
-*Correct file label restored, with SELinux remaining enforcing.*
-
-![Kali successfully retrieved the original probe content after the correct label was restored](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-http-recovery.png?raw=true)
-*Kali successfully retrieved the original probe content after the correct label was restored.*
-
 ### Restoring access without disabling SELinux
 
 I restored the file’s expected label and checked the result:
@@ -262,8 +256,11 @@ The complete sequence was:
 5. Restore the correct label.
 6. Confirm access worked again without disabling SELinux.
 
-> Screenshot placement — SELinux recovery
-> Place an image of the restored label and enforcing state here, followed by Kali’s successful request to the same file. Keep the filename consistent across the failure and recovery evidence.
+![Correct file label restored, with SELinux remaining enforcing](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-restored-context.png?raw=true)
+*Correct file label restored, with SELinux remaining enforcing.*
+
+![Kali successfully retrieved the original probe content after the correct label was restored](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-http-recovery.png?raw=true)
+*Kali successfully retrieved the original probe content after the correct label was restored.*
 
 ## 5. Testing Fail2Ban SSH protection
 
