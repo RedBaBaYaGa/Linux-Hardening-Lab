@@ -312,12 +312,6 @@ findtime = 600
 bantime = 300
 ```
 
-![Fail2Ban runtime checks — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-a.png?raw=true)
-*First screenshot of the Fail2Ban runtime verification checks.*
-
-![Fail2Ban runtime checks — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-b.png?raw=true)
-*Additional checks during Fail2Ban runtime verification.*
-
 ### Checking detection with one failed login
 
 After checking the server’s host-key fingerprint and Fail2Ban’s starting counters, I made one deliberately incorrect password attempt from Kali:
@@ -341,11 +335,11 @@ The SSH journal recorded a failed password for `roc` from Kali’s address, `192
 
 A separate connection timeout occurred before authentication. I did not count that as another confirmed failed-password attempt.
 
-![Fail2Ban single-failure test — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-a.png?raw=true)
-*First screenshot collected during the controlled SSH single-failure test.*
+![Initial jail status and host-key check](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-b.png?raw=true)
+*Fail2Ban initial jail status showing 0 failures before testing, followed by the host-key fingerprint check.*
 
-![Fail2Ban single-failure test — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-b.png?raw=true)
-*Second screenshot collected during the controlled SSH single-failure test.*
+![Single failed password attempt from Kali](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-a.png?raw=true)
+*Single deliberate failed password attempt executed from Kali against the Rocky server.*
 
 ### Checking that the ban was enforced
 
@@ -369,11 +363,17 @@ I checked these results together rather than rely on the connection error alone:
 - The firewall contained a matching rule for Kali’s address and SSH port.
 - A new SSH connection from Kali was refused.
 
-![Fail2Ban enforcement evidence — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-c.png?raw=true)
-*First screenshot selected for the Fail2Ban enforcement section.*
+![Multiple failed attempts from Kali](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-a.png?raw=true)
+*Controlled sequence of failed password attempts executed from Kali.*
 
-![Fail2Ban enforcement evidence — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-d.png?raw=true)
-*Second screenshot selected for the Fail2Ban enforcement section.*
+![Fail2Ban active ban status](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-b.png?raw=true)
+*Fail2Ban status reporting 6 total failures and Kali's IP actively banned.*
+
+![Firewall rejection rule](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-c.png?raw=true)
+*Active firewall rich rule rejecting TCP port 22 traffic from Kali's IP address.*
+
+![Connection refused from Kali](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-d.png?raw=true)
+*Fresh SSH connection from Kali refused by the server-side firewall rule.*
 
 The restriction targeted SSH from Kali, not all traffic from that machine. The separate HTTP allowance remained configured, but I did not test HTTP access while the SSH ban was active.
 
@@ -387,11 +387,11 @@ There were no active bans, and the SSH rejection rule was no longer present. The
 
 I then completed a legitimate SSH login from Kali. The recorded recovery did not involve a manual unban.
 
-![Fail2Ban expiry and recovery evidence — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-a.png?raw=true)
-*First screenshot selected for the Fail2Ban expiry and recovery section.*
+![Successful SSH login from Kali](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-a.png?raw=true)
+*Successful legitimate SSH login session from Kali following ban expiry.*
 
-![Fail2Ban expiry and recovery evidence — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-b.png?raw=true)
-*Second screenshot selected for the Fail2Ban expiry and recovery section.*
+![Post-expiry jail and firewall verification](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-expiry-candidate-b.png?raw=true)
+*Fail2Ban jail status showing 0 active bans and firewall rich rules confirming removal of the SSH rejection rule.*
 
 This demonstrated automatic removal of the restriction and successful recovery.
 
