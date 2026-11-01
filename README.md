@@ -309,8 +309,11 @@ findtime = 600
 bantime = 300
 ```
 
-> Screenshot placement — Fail2Ban settings
-> Place an image here showing the runtime query commands and their returned values. If you also include the configuration file, label it separately so the reader can distinguish saved settings from runtime checks.
+![Fail2Ban runtime checks — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-a.png?raw=true)
+*First screenshot of the Fail2Ban runtime verification checks.*
+
+![Fail2Ban runtime checks — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-runtime-candidate-b.png?raw=true)
+*Additional checks during Fail2Ban runtime verification.*
 
 ### Checking detection with one failed login
 
