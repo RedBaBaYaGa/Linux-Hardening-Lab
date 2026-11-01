@@ -441,6 +441,4 @@ The most useful part of this lab was learning to check the outcome of a change r
 
 This write-up brings together the lab’s working notes, recorded terminal output, and selected screenshots.
 
-Screenshots are placed beside the tests they support so the commands, results, and explanation can be read together. A final check for sensitive information is still required before public publication.
-
-The commands document what I did in this environment. They are not an automated setup script or a set of instructions to apply unchanged to another server.
+Screenshots are placed beside the tests they support so the commands, results, and explanation can be read together. The commands document what I did in this environment. They are not an automated setup script or a set of instructions to apply unchanged to another server.
