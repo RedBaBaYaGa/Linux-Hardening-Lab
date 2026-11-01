@@ -232,8 +232,14 @@ This connected the failed request to an enforced SELinux denial against the inco
 
 The recorded denial was for `getattr`, an operation involving file information. I did not describe it as a recorded file-content read denial or count the two audit events as two separate attacks.
 
-> Screenshot placement — SELinux failure and investigation
-> Place Kali’s `403 Forbidden` response here, followed by Rocky’s file permissions, SELinux label, enforcing state, and matching audit records. Keep the filename, `httpd_t`, `default_t`, `getattr`, and `permissive=0` readable. Use separate images if needed.
+![Kali’s request to the deliberately mislabelled probe returned 403 Forbidden](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-probe-forbidden.png?raw=true)
+*Kali’s request to the deliberately mislabelled probe returned 403 Forbidden.*
+
+![Correct file label restored, with SELinux remaining enforcing](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-restored-context.png?raw=true)
+*Correct file label restored, with SELinux remaining enforcing.*
+
+![Kali successfully retrieved the original probe content after the correct label was restored](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/selinux-http-recovery.png?raw=true)
+*Kali successfully retrieved the original probe content after the correct label was restored.*
 
 ### Restoring access without disabling SELinux
 
