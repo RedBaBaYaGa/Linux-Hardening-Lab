@@ -338,8 +338,11 @@ The SSH journal recorded a failed password for `roc` from Kali’s address, `192
 
 A separate connection timeout occurred before authentication. I did not count that as another confirmed failed-password attempt.
 
-> Screenshot placement — One failure detected
-> Place the matching SSH journal entry and Fail2Ban status here. Show the username, source address, one detected failure, and no active ban. Avoid including any password entry.
+![Fail2Ban single-failure test — first screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-a.png?raw=true)
+*First screenshot collected during the controlled SSH single-failure test.*
+
+![Fail2Ban single-failure test — second screenshot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/fail2ban-detection-candidate-b.png?raw=true)
+*Second screenshot collected during the controlled SSH single-failure test.*
 
 ### Checking that the ban was enforced
 
