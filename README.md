@@ -4,8 +4,7 @@ I built this lab to get hands-on experience with Linux security and understand h
 
 I set up a Rocky Linux server and used Kali Linux as the test machine. I started by checking which services were running and disabling the ones the server did not need. I then tested firewall rules, investigated a SELinux access denial, and configured Fail2Ban to temporarily block repeated failed SSH login attempts.
 
-For each test, I checked the results in the terminal and relevant logs, then verified that normal access could be restored. This write-up explains
-the changes I made, what happened during testing, and the limits of what I demonstrated.
+For each test, I checked the results in the terminal and relevant logs. Where a test deliberately blocked access, I also checked that normal access could be restored. This write-up explains the changes I made, what happened during testing, and the limits of what I demonstrated.
 
 ## Overview
 
@@ -54,6 +53,8 @@ I kept Rocky's VMware console available throughout the tests. This gave me a way
 ### Project boundaries
 
 This project focuses on service reduction, firewall rules, SELinux, and Fail2Ban. It does not cover SQL injection, cross-site scripting (XSS), or exploiting application vulnerabilities.
+
+I later began preparing Suricata as a separate project. That preparation is outside this write-up, but it changed the VM’s network configuration, as noted in the limitations.
 
 ## 1. Establishing the baseline
 
@@ -107,12 +108,14 @@ sudo ss -tulnp
 
 All five units remained inactive. The Avahi UDP 5353 and CUPS TCP 631 sockets were no longer present, while SSH remained available.
 
-This showed that the change survived a reboot. In the case of CUPS, I had removed an unnecessary local service rather than closed a remotely accessible printing service demonstrated by the lab.
+This showed that the change survived a reboot. CUPS had only been listening on loopback, so disabling it removed unnecessary local functionality. I had not demonstrated that it was accessible from Kali.
 
-![Post-reboot socket check showing SSH still listening, with Avahi and CUPS sockets absent](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets.png?raw=true)
-*All five targeted Avahi and CUPS units remained inactive after reboot* 
+![All five targeted Avahi and CUPS units inactive after reboot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets.png?raw=true)
 
-![Services after reboot](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets2.png?raw=true)
+*All five targeted Avahi and CUPS units remained inactive after reboot.*
+
+![Post-reboot socket check showing SSH still listening, with Avahi and CUPS sockets absent](https://github.com/RedBaBaYaGa/Linux-Hardening-Lab/blob/main/services-post-reboot-sockets2.png?raw=true)
+
 *Post-reboot socket check showing SSH still listening, with the Avahi and CUPS sockets absent.*
 
 ### Removing the unused Cockpit firewall allowance
@@ -438,6 +441,6 @@ The most useful part of this lab was learning to check the outcome of a change r
 
 This write-up brings together the lab’s working notes, recorded terminal output, and selected screenshots.
 
-Screenshots will be checked for sensitive information before publication. They will be placed beside the test they support so the commands, results, and explanation can be read together.
+Screenshots are placed beside the tests they support so the commands, results, and explanation can be read together. A final check for sensitive information is still required before public publication.
 
 The commands document what I did in this environment. They are not an automated setup script or a set of instructions to apply unchanged to another server.
